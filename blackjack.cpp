@@ -15,17 +15,6 @@ bool handEnd;                               //determines when a hand is finished
 
 
 
-/*
-                !!!! FUTURE NOTE !!!!
-
-    maybe implement split hands, but bets cant be implemented so 
-    maybe split hands arent necessary and wold require making separate 
-    strings for each hand or keeping track of where first hand ends
-*/
-
-
-
-
 //builds the deck of cards to be used
 void makeDeck()
 {
