@@ -52,7 +52,7 @@ class Deck
 
         Deck(string ranks[], string suits[], int values[])
         {
-            int rlen = sizeof(ranks) / sizeof(ranks[0]), slen = sizeof(suits) / sizeof(suits[0]);
+            int rlen = *(&ranks + 1) - ranks, slen = *(&suits + 1) - suits;
             for(int j = 0; j < rlen; j++)
             {
                 for(int k = 0; k < slen; k++)
@@ -342,6 +342,10 @@ void play()
 int main()
 {
     srand(time(0));
+
+    Card c("10", "♥", 10);
+    cout << c << endl;
+
     /*
     play();
 
