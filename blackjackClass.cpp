@@ -3,7 +3,11 @@
 #include <vector>
 using namespace std;
 
+string r[13] = {"A", "2", "3", "4", "5", "6", "7", "8","9","10", "J", "Q", "K"};
+string s[4] = {"♥", "♦", "♠", "♣"};
+int v[13] = {11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10};
 
+//problems with printing vector Deck
 
 
 class Card
@@ -43,16 +47,20 @@ ostream& operator<<(ostream &strm, Card &c)
     return strm << c.getRank() << c.getSuit();
 }
 
+
 class Deck
 {
     private:
+        //contains all cards in the deck
         vector<Card> cards;
+
+        int size;
+
 
     public:
 
-        Deck(string ranks[], string suits[], int values[])
+        Deck(string ranks[], int rlen, string suits[], int slen, int values[])
         {
-            int rlen = *(&ranks + 1) - ranks, slen = *(&suits + 1) - suits;
             for(int j = 0; j < rlen; j++)
             {
                 for(int k = 0; k < slen; k++)
@@ -67,18 +75,57 @@ class Deck
                     cards.push_back(Card(ranks[j], suits[k], val));   
                 }
             }
+
+            size = cards.size();
+            cout << "size: " << size << endl;
+            shuffle();
         }
+
+        int getSize()
+        {
+            return size;
+        }
+        
+        Card get(int i)
+        {
+            return cards.at(i);
+        }
+
+        void shuffle()
+        {
+            for(int j = cards.size() - 1; j > 0; j--)
+            {
+                int pos = rand() % (j + 1);
+                Card temp = cards.at(j);
+                cards.at(j) = cards.at(pos);
+                cards.at(pos) = temp;
+            }
+            size = cards.size();
+        }
+        
+        void deal()
+        {
+            size--;
+            Card c = cards.at(size);
+            cout << c << " ";
+        }
+
+        
 };
 
-/*
 
-string cards[52] = {""};                    //initializes empty deck of cards
-string suits[4] = {"♥", "♦", "♠", "♣"};     //array of card suits
-int cardsDealt[52] = {0};                   //placeholder array for each card if dealt
-int pHand, dHand;                           //stores numerical value of hands
-string player, dealer;                      //string output to display hands
-bool hasAce;                                //determines if player has a preexisting ace to treat next drawn ace as 1
-bool handEnd;                               //determines when a hand is finished
+/*
+ostream& operator<<(ostream &strm, Deck &) 
+{
+    return strm << d.deal();
+}
+*/
+
+/*
+int pHand, dHand;                   //stores numerical value of hands
+string player, dealer;              //string output to display hands
+bool hasAce;                        //determines if player has a preexisting ace to treat next drawn ace as 1
+bool handEnd;                       //determines when a hand is finished
 
 
 
@@ -86,46 +133,11 @@ bool handEnd;                               //determines when a hand is finished
 *
                 !!!! FUTURE NOTE !!!!
 
-    maybe implement split hands, but bets cant be implemented so 
-    maybe split hands arent necessary and wold require making separate 
-    strings for each hand or keeping track of where first hand ends
+    maybe implement split hands, but requires implementation of bets 
+    split hands would require making separate strings or vectors for 
+    each hand or keeping track of where first hand ends
+
 *
-
-
-
-
-//builds the deck of cards to be used
-void makeDeck()
-{
-    //initializes deck and dealt cards to default values
-    for(int i = 0; i < 52; i++)
-    {
-        cards[i] = "";
-        cardsDealt[i] = 0;
-    }
-
-    //assigns cards values to deck, cards[]
-    for(int k = 0; k < 4; k++)
-    {
-        for(int i = 0; i < 13; i++)
-        {
-            int index = (13 * k) + (i % 13);
-
-            if(i == 1)
-                cards[index] += "A";
-            else if (i == 11) 
-                cards[index] += "J";
-            else if (i == 12) 
-                cards[index] += "Q";
-            else if(i == 0)
-                cards[index] += "K";
-            else
-                cards[index] += to_string(i); 
-
-            cards[index] += suits[k];
-        }
-    }
-}
 
 
 
@@ -343,12 +355,16 @@ int main()
 {
     srand(time(0));
 
-    Card c("10", "♥", 10);
-    cout << c << endl;
+    Deck b(r, 13, s, 4, v);
+    for(int i = 0; i < 13; i++)
+    {
+        for(int k = 0; k < 4; k++)
+            b.deal();
+        cout << endl;
+    }
+
 
     /*
-    play();
-
     string input = "";
     cout << "Would you like to play another hand? y/n?: ";
     cin >> input;
@@ -358,7 +374,9 @@ int main()
         cin >> input;
     }
     if(input == "y")
-        main();
-*/
+        
+    */
+
+
     return 0;
 }
