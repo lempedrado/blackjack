@@ -1,15 +1,11 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+
 using namespace std;
 
-string r[13] = {"A", "2", "3", "4", "5", "6", "7", "8","9","10", "J", "Q", "K"};
-string s[4] = {"♥", "♦", "♠", "♣"};
-int v[13] = {11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10};
 
-//problems with printing vector Deck
-
-
+//Card class for individual cards
 class Card
 {
     private: 
@@ -18,7 +14,7 @@ class Card
         int val;
 
     public:
-
+        //Card constructor
         Card(string rank, string suit, int val)
         {
             this->rank = rank;
@@ -26,6 +22,7 @@ class Card
             this->val = val;
         }
 
+        //get methods
         string getRank()
         {
             return rank;
@@ -40,44 +37,60 @@ class Card
         {
             return val;
         }
+
+        //set method
+        void setVal(int i)
+        {
+            val = i;
+        }
 };
 
-ostream& operator<<(ostream &strm, Card &c) 
-{
-    return strm << c.getRank() << c.getSuit();
-}
 
-
+//Deck class for a vector of Card objects
 class Deck
 {
     private:
-        //contains all cards in the deck
-        vector<Card> cards;
+        //contains all Cards in the Deck
+        vector<Card> deck;
 
+        //number of Cards left to be dealt
         int size;
 
+        //string array of card ranks
+        string ranks[13] = {"A", "2", "3", "4", "5", "6", "7", "8", "9","10", "J", "Q", "K"};
 
+        //string array of card suits
+        string suits[4] = {"♥", "♦", "♠", "♣"};
+        
     public:
-
-        Deck(string ranks[], int rlen, string suits[], int slen, int values[])
+        //constructs Deck
+        Deck()
         {
-            for(int j = 0; j < rlen; j++)
+            //iterates for each rank
+            for(int j = 0; j < 13; j++)
             {
-                for(int k = 0; k < slen; k++)
+                //iterates for each suit
+                for(int k = 0; k < 4; k++)
                 {
                     int val;
-                    if(j == 1)
+                    //ACE card value
+                    if(j == 0)
                         val = 11;
-                    else if(j == 11 || j == 12 || j == 0)
+                    //face card values
+                    else if(j == 10 || j == 11 || j == 12)
                         val = 10;
+                    //number card values
                     else
-                        val = j;
-                    cards.push_back(Card(ranks[j], suits[k], val));   
+                        val = j + 1;
+
+                    //creates a Card object and adds it to the deck
+                    deck.push_back(Card(ranks[j], suits[k], val));
                 }
             }
 
-            size = cards.size();
-            cout << "size: " << size << endl;
+            size = deck.size();
+            //shuffle the deck twice
+            shuffle();
             shuffle();
         }
 
@@ -85,298 +98,262 @@ class Deck
         {
             return size;
         }
-        
-        Card get(int i)
-        {
-            return cards.at(i);
-        }
 
+        //shuffles the deck
         void shuffle()
         {
-            for(int j = cards.size() - 1; j > 0; j--)
+            for(int j = size - 1; j > 0; j--)
             {
                 int pos = rand() % (j + 1);
-                Card temp = cards.at(j);
-                cards.at(j) = cards.at(pos);
-                cards.at(pos) = temp;
+                Card temp = deck.at(j);
+                deck.at(j) = deck.at(pos);
+                deck.at(pos) = temp;
             }
-            size = cards.size();
-        }
-        
-        void deal()
-        {
-            size--;
-            Card c = cards.at(size);
-            cout << c << " ";
         }
 
-        
+        //deals the next Card in the deck and decrements the size
+        Card deal()
+        {
+            //gets the Card at the top of the deck
+            Card c = deck.back();
+            
+            //removes the Card from the deck
+            deck.pop_back();
+            size = deck.size();
+
+            //returns dealt Card
+            return c;
+        }
 };
 
 
-/*
-ostream& operator<<(ostream &strm, Deck &) 
+//Hand class to store all Cards a player has been dealt
+class Hand
 {
-    return strm << d.deal();
-}
-*/
+    private:
+        //Hand total initializes to 0
+        int total = 0;
+        vector<Card> hand;
+    public:
 
-/*
-int pHand, dHand;                   //stores numerical value of hands
-string player, dealer;              //string output to display hands
-bool hasAce;                        //determines if player has a preexisting ace to treat next drawn ace as 1
-bool handEnd;                       //determines when a hand is finished
-
-
-
-
-*
-                !!!! FUTURE NOTE !!!!
-
-    maybe implement split hands, but requires implementation of bets 
-    split hands would require making separate strings or vectors for 
-    each hand or keeping track of where first hand ends
-
-*
-
-
-
-//draws a cards from the deck and adds it to respective player's hand
-string hit(int p)
-{
-    int i = rand() % 52;
-    //cout << "DEBUGGING: " << i << endl; //debugging
-
-    while(cardsDealt[i] == 1)
-    {
-        i = rand() % 52;
-        //cout << "DEBUGGING: " << i << endl; //debugging
-    }
-
-    int val = i % 13;
-
-    if(p)
-    {   
-        //decides if a dealt ace will equal 1 or 11
-        if(val == 1)
+        Hand()
         {
-            hasAce = true;
-            if(pHand + 11 > 21)
-                pHand += val;
-            else
-                pHand += 11;
         }
-        //makes all face cards value 10
-        else if(val == 0 || val > 10)
-            pHand += 10;
-        else
-            pHand += val;
-    }
-    else
-    {
-        if(val == 1)
+
+        //adds the Card to this Hand
+        void add(Card c)
         {
-            if(dHand + 11 > 21)
-                dHand += val;
-            else
-                dHand += 11;
-        }
-        else if(val == 0 || val > 10)
-            dHand += 10;
-        else
-            dHand += val;
-    }
-    cardsDealt[i] = 1;
+            //adds card to the Hand vector
+            hand.push_back(c);
 
-    return cards[i];
-}
+            //add the Card's value to the Hand total
+            total += c.getVal();
 
-
-
-//deals first two cards to DEALER and PLAYER to start hand
-void startGame()
-{
-    for(int i = 0; i < 4; i++)
-    {
-        if(i % 2 == 0)
-            dealer += hit(0) + " ";
-        else 
-            player += hit(1) + " ";
-    }
-   
-    //cout << "DEBUGGING: " << d << endl;
-}
-
-
-
-//updates the DEALER and PLAYER hands printed to console
-void update()
-{
-    string s = dealer.substr(0, dealer.find(" "));
-    cout << "\n\nDEALER:\n" << s << " []\n" << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-}
-
-
-
-//checks hands of DEALER and PLAYER for a winner
-void compareHands(int end)
-{
-    
-    //checks if player has a playable hand
-    if(pHand > 21)
-    {   
-        cout << "\n\nDEALER:\n" << dealer << endl << dHand << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-        cout << "YOU LOSE\n";
-        handEnd = true;
-    }
-
-
-    //checks for BLACKJACK
-    if(dHand == 21)
-    {
-        cout << "\n\nDEALER:\n" << dealer << endl << dHand << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-        handEnd = true;
-        if(pHand != 21)
-        {
-            cout << "DEALER has BLACKJACK\nYOU LOSE\n";
-            return;
-        }
-        cout << "YOU and DEALER have BLACKJACK\n\tDRAW\n";
-        return;
-    }
-
-
-    if(pHand == 21)
-    {
-        cout << "\n\nDEALER:\n" << dealer << endl << dHand << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-        handEnd = true;
-        cout << "YOU have BLACKJACK\nYOU WIN\n";
-        return;
-    }
-
-
-    //for starting hands dealt
-    if(!end)
-        return;
-
-    
-    cout << "\n\nDEALER:\n" << dealer << endl << dHand << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-
-    if(dHand > 21)
-    {
-        cout << "DEALER BUST.\tYOU WIN\n";
-        return;
-    }
-
-    handEnd = true;
-    //determines which hand wins
-    if(pHand > dHand)
-    {
-        cout << "YOU WIN\n";
-    }
-    else if(dHand > pHand)
-        cout << "YOU LOSE\n";
-    else
-        cout << "DRAW\n";
-}
-
-
-
-//when player has a valid hand and decides to stand, determines winner
-void stand()
-{
-    //cout << "DEALER:\n" << dealer << endl << dHand << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-    
-    //DEALER must hit while below 17
-    while(dHand < 17)
-    {
-        dealer += hit(0) + " ";
-        //cout << "\n\nDEALER:\n" << dealer << endl << dHand << "\nYOU:\n" << player << "\n" << pHand << "\n\n";
-    }
-
-    compareHands(1);
-}
-
-
-
-//function that calls all previous functions and initializes variables to play blackjack
-void play()
-{
-    makeDeck(); //builds deck of cards
-    pHand = 0, dHand = 0;
-    hasAce = false;
-    handEnd = false;
-    string input;
-
-    //deals starting hand to begin game
-    player = "", dealer = "";    //output to display daelt hands
-    startGame();          //daels starting hands to begin game
-    update();             //prints updated hands to console
-
-    
-    //after cards are dealt, check if anyone has blackjack
-    compareHands(0);
-
-    //runs if nobody has BLACKJACK on the draw
-    if(!handEnd)
-    {
-        while(input != "Stand" && input != "s")
-        {
-            cout << "'Hit' or 'Stand': ";
-            cin >> input;
-            while(input != "Hit" && input != "Stand" && input != "h" && input != "s")
+            //check if there is an ACE in this Hand that makes the hand BUST
+            int count = 0;
+            for(Card c : hand)
             {
-                cout << "Invalid. Enter 'Hit' or 'Stand': ";
-                cin >> input;
-            }
-            if(input == "Hit" || input == "h")
-            {
-                player += hit(1) + " ";  
-                //if player draws a second ace, make the value of the first one equal 1 instead of 11
-                if(hasAce && pHand > 21)
+                if(c.getRank() == "A" && total > 21)
                 {
-                    hasAce = false;
-                    pHand -= 10;
+                    c.setVal(1);
+                    //lowers total if there are multiple ACEs, so any other ACEs will still be 11 if legal
+                    total -= 10;
                 }
-                update();
-                compareHands(0);
-                if(handEnd)
-                    return;
+                count += c.getVal();
+            }
+            //add the Card's value to the Hand total
+            total = count;
+        }
+
+        //clears any Cards from the Hand and resets the Hand total
+        void newHand()
+        {
+            hand.clear();
+            total = 0;
+        }
+
+        //get Hand total
+        int getTotal()
+        { 
+            return total;
+        }
+
+        //string representation of the Cards in this Hand
+        string toString()
+        {
+            string out = "";
+            for(Card c : hand)
+                out += c.getRank() + c.getSuit() + " ";
+            return out;
+        }
+};
+
+//class to run a game of Blackjack
+class BlackjackRunner
+{
+    private:
+        Hand player, dealer;    //stores Cards in each players Hand
+        Deck d;                 //Deck of Cards
+        bool handEnd;           //determines when a hand is finished being played
+
+    public:
+
+        BlackjackRunner()
+        {
+        }
+
+        //deals first two cards to DEALER and PLAYER to start hand
+        void startGame()
+        {
+            for(int i = 0; i < 4; i++)
+            {
+                //PLAYER gets dealt first
+                if(i % 2 == 0)
+                    player.add(hit());
+                else 
+                    dealer.add(hit());
             }
         }
-        stand();
-    }
-}
+        
+        
+        //updates the DEALER and PLAYER Hands printed to console
+        void update()
+        {
+            //hides DEALER's second Card (hole card)
+            string d = dealer.toString();
+            string s = d.substr(0, d.find(" "));
+            //prints dealer's and player's hands
+            cout << "\n\nDEALER:\n" << s << " []\n" << "\nYOU:\n" << player.toString() << "\n" << player.getTotal() << "\n\n";
+        }
 
-*/
+        //checks Hands of DEALER and PLAYER for a winner
+        int compareHands()
+        {
+            //get player and dealer hand totals
+            int pTotal = player.getTotal();
+            int dTotal = dealer.getTotal();
+            
+            //checks if player BUST
+            if(pTotal > 21)
+            {   
+                cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+                cout << "YOU LOSE\n";
+                return 1;
+            }
+            //checks if dealer has BLACKJACK
+            else if(dTotal == 21)
+            {
+                cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+                //compares dealer hand to player hand
+                if(pTotal != 21)
+                    cout << "DEALER has BLACKJACK\nYOU LOSE\n";
+                else
+                    cout << "YOU and DEALER have BLACKJACK\n\tDRAW\n";
+                return 1;
+            }
+            //checks if player got BLACKJACK
+            else if(pTotal == 21)
+            {
+                cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+                cout << "YOU have BLACKJACK\nYOU WIN\n";
+                return 1;
+            }
+            return 0;
+        }
 
-//main function to start playing BLACKJACK and potential future hands
+        Card hit()
+        {
+            return d.deal();
+        }
+
+        //when player has a valid hand and decides to stand, determines winner
+        void stand()
+        {            
+            //DEALER must hit while below 17
+            while(dealer.getTotal() < 17)
+                dealer.add(hit());
+
+            int dTotal = dealer.getTotal(), pTotal = player.getTotal();
+            cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+            //checks if DEALER BUST
+            if(dTotal > 21)
+            {
+                cout << "DEALER BUST.\tYOU WIN\n";
+                return;
+            }
+            //if DEALER stands
+            if(pTotal > dTotal)
+                cout << "YOU WIN\n";
+            else if(dTotal > pTotal)
+                cout << "YOU LOSE\n";
+            else
+                cout << "DRAW\n";
+            compareHands();
+        }
+
+        //plays a game of Blackjack
+        void play()
+        {
+            string input;
+            player.newHand();
+            dealer.newHand();
+
+            startGame();          //deals starting hands to begin game
+            update();             //prints updated Hands to console
+            
+            //after cards are dealt, check if anyone has BLACKJACK
+            if(compareHands())
+                return;
+
+            //runs if nobody has BLACKJACK on the deal
+            while(input != "Stand" && input != "s")
+            {
+                cout << "'Hit' or 'Stand': ";
+                cin >> input;
+
+                //validates user input
+                while(input != "Hit" && input != "Stand" && input != "h" && input != "s")
+                {
+                    cout << "Invalid. Enter 'Hit' or 'Stand': ";
+                    cin >> input;
+                }
+
+                //player HITS
+                if(input == "Hit" || input == "h")
+                {
+                    player.add(hit());
+                    update();
+                    if(compareHands())
+                        return;
+                }
+            }
+            stand();
+        }
+
+};
+
+
+//main function to start playing BLACKJACK
 int main()
 {
     srand(time(0));
-
-    Deck b(r, 13, s, 4, v);
-    for(int i = 0; i < 13; i++)
+    
+    BlackjackRunner bjr;
+    string input;
+    do
     {
-        for(int k = 0; k < 4; k++)
-            b.deal();
-        cout << endl;
-    }
-
-
-    /*
-    string input = "";
-    cout << "Would you like to play another hand? y/n?: ";
-    cin >> input;
-    while(input != "y" && input != "n")
-    {
-        cout << "Invalid. Please enter 'y' or 'n': ";
+        bjr.play();
+        cout << "Would you like to play another hand? y/n?: ";
         cin >> input;
+        //input validation
+        while(input != "y" && input != "yes" && input != "n" && input != "no")
+        {
+            cout << "Invalid input. Please enter 'y' or 'n': ";
+            cin >> input;
+        }
     }
-    if(input == "y")
-        
-    */
-
+    while(input != "n" && input != "no");
+    cout << "\n\nThank you for playing :)\n\n\n";
 
     return 0;
 }
