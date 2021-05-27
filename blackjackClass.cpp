@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -66,25 +67,29 @@ class Deck
         //constructs Deck
         Deck()
         {
-            //iterates for each rank
-            for(int j = 0; j < 13; j++)
+            //full Deck consists of 3 combined standard decks of cards
+            for(int i = 0; i < 3; i++)
             {
-                //iterates for each suit
-                for(int k = 0; k < 4; k++)
+                //iterates for each rank
+                for(int j = 0; j < 13; j++)
                 {
-                    int val;
-                    //ACE card value
-                    if(j == 0)
-                        val = 11;
-                    //face card values
-                    else if(j == 10 || j == 11 || j == 12)
-                        val = 10;
-                    //number card values
-                    else
-                        val = j + 1;
+                    //iterates for each suit
+                    for(int k = 0; k < 4; k++)
+                    {
+                        int val;
+                        //ACE card value
+                        if(j == 0)
+                            val = 11;
+                        //face card values
+                        else if(j == 10 || j == 11 || j == 12)
+                            val = 10;
+                        //number card values
+                        else
+                            val = j + 1;
 
-                    //creates a Card object and adds it to the deck
-                    deck.push_back(Card(ranks[j], suits[k], val));
+                        //creates a Card object and adds it to the deck
+                        deck.push_back(Card(ranks[j], suits[k], val));
+                    }
                 }
             }
 
@@ -92,11 +97,6 @@ class Deck
             //shuffle the deck twice
             shuffle();
             shuffle();
-        }
-
-        int getSize()
-        {
-            return size;
         }
 
         //shuffles the deck
@@ -114,6 +114,12 @@ class Deck
         //deals the next Card in the deck and decrements the size
         Card deal()
         {
+            //if the deck is almost empty, reshuffle a new Deck and place it under the remaining Cards
+            if(deck.size() < 10)
+            {
+                Deck d;
+                deck.insert(deck.begin(), d.deck.begin(), d.deck.end());
+            }
             //gets the Card at the top of the deck
             Card c = deck.back();
             
@@ -151,9 +157,10 @@ class Hand
 
             //check if there is an ACE in this Hand that makes the hand BUST
             int count = 0;
-            for(Card c : hand)
+            for(auto &c : hand)
             {
-                if(c.getRank() == "A" && total > 21)
+                //if an ACE is in the hand that makes it bust, count it as a 1 instead of 11
+                if(c.getVal() == 11 && total > 21)
                 {
                     c.setVal(1);
                     //lowers total if there are multiple ACEs, so any other ACEs will still be 11 if legal
@@ -161,7 +168,6 @@ class Hand
                 }
                 count += c.getVal();
             }
-            //add the Card's value to the Hand total
             total = count;
         }
 
@@ -174,19 +180,20 @@ class Hand
 
         //get Hand total
         int getTotal()
-        { 
+        {
             return total;
         }
 
-        //string representation of the Cards in this Hand
-        string toString()
-        {
-            string out = "";
-            for(Card c : hand)
-                out += c.getRank() + c.getSuit() + " ";
-            return out;
-        }
+        //overload the << operator for printing a Hand
+        friend ostream& operator<<(ostream &strm, Hand h);
 };
+
+ostream& operator<<(ostream &strm, Hand h)
+{
+    for(Card c : h.hand)
+        strm << c.getRank() << c.getSuit() << " ";
+    return strm;
+}
 
 //class to run a game of Blackjack
 class BlackjackRunner
@@ -194,7 +201,6 @@ class BlackjackRunner
     private:
         Hand player, dealer;    //stores Cards in each players Hand
         Deck d;                 //Deck of Cards
-        bool handEnd;           //determines when a hand is finished being played
 
     public:
 
@@ -209,9 +215,9 @@ class BlackjackRunner
             {
                 //PLAYER gets dealt first
                 if(i % 2 == 0)
-                    player.add(hit());
+                    player.add(d.deal());
                 else 
-                    dealer.add(hit());
+                    dealer.add(d.deal());
             }
         }
         
@@ -220,10 +226,11 @@ class BlackjackRunner
         void update()
         {
             //hides DEALER's second Card (hole card)
-            string d = dealer.toString();
-            string s = d.substr(0, d.find(" "));
+            ostringstream s;
+            s << dealer;
+            string d = s.str().substr(0, s.str().find(" "));
             //prints dealer's and player's hands
-            cout << "\n\nDEALER:\n" << s << " []\n" << "\nYOU:\n" << player.toString() << "\n" << player.getTotal() << "\n\n";
+            cout << "\n\nDEALER:\n" << d << " []\n" << "\nYOU:\n" << player << "\n" << player.getTotal() << "\n\n";
         }
 
         //checks Hands of DEALER and PLAYER for a winner
@@ -236,14 +243,14 @@ class BlackjackRunner
             //checks if player BUST
             if(pTotal > 21)
             {   
-                cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+                cout << "\n\nDEALER:\n" << dealer << "\n" << dTotal << "\nYOU:\n" << player << "\n" << pTotal << "\n\n";
                 cout << "YOU LOSE\n";
                 return 1;
             }
             //checks if dealer has BLACKJACK
             else if(dTotal == 21)
             {
-                cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+                cout << "\n\nDEALER:\n" << dealer << "\n" << dTotal << "\nYOU:\n" << player << "\n" << pTotal << "\n\n";
                 //compares dealer hand to player hand
                 if(pTotal != 21)
                     cout << "DEALER has BLACKJACK\nYOU LOSE\n";
@@ -254,16 +261,11 @@ class BlackjackRunner
             //checks if player got BLACKJACK
             else if(pTotal == 21)
             {
-                cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+                cout << "\n\nDEALER:\n" << dealer << "\n" << dTotal << "\nYOU:\n" << player << "\n" << pTotal << "\n\n";
                 cout << "YOU have BLACKJACK\nYOU WIN\n";
                 return 1;
             }
             return 0;
-        }
-
-        Card hit()
-        {
-            return d.deal();
         }
 
         //when player has a valid hand and decides to stand, determines winner
@@ -271,10 +273,10 @@ class BlackjackRunner
         {            
             //DEALER must hit while below 17
             while(dealer.getTotal() < 17)
-                dealer.add(hit());
+                dealer.add(d.deal());
 
             int dTotal = dealer.getTotal(), pTotal = player.getTotal();
-            cout << "\n\nDEALER:\n" << dealer.toString() << "\n" << dTotal << "\nYOU:\n" << player.toString() << "\n" << pTotal << "\n\n";
+            cout << "\n\nDEALER:\n" << dealer << "\n" << dTotal << "\nYOU:\n" << player << "\n" << pTotal << "\n\n";
             //checks if DEALER BUST
             if(dTotal > 21)
             {
@@ -321,7 +323,7 @@ class BlackjackRunner
                 //player HITS
                 if(input == "Hit" || input == "h")
                 {
-                    player.add(hit());
+                    player.add(d.deal());
                     update();
                     if(compareHands())
                         return;
